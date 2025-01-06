@@ -1,0 +1,5 @@
+build/**
+.DS_Store
+.cache/**
+.vscode/**
+**/user_credentials.h
