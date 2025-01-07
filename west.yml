@@ -1,0 +1,13 @@
+manifest:
+  self:
+    west-commands: scripts/west-commands.yml
+
+  projects:
+    - name: zephyr
+      url: https://github.com/edgebr/zephyr
+      revision: http-complete-callback
+      import:
+        file: west.yml
+        name-allowlist:
+          - mbedtls
+          - cmsis

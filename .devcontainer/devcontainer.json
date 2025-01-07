@@ -1,0 +1,10 @@
+{
+    "build": {
+        "dockerfile": "${localWorkspaceFolder}/Dockerfile"
+    },
+    "runArgs": [
+        "--privileged"
+    ],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workdir/tinysmtp,type=bind",
+    "workspaceFolder": "/workdir/tinysmtp"
+}

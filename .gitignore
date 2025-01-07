@@ -3,3 +3,5 @@ build/**
 .cache/**
 .vscode/**
 **/user_credentials.h
+compile_commands.json
+.clangd

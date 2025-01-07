@@ -85,24 +85,24 @@ static int send_cmd(struct socket *sock, const char *cmd[], int expected_rsp) {
 int ts_transport_send(struct transport *transport, struct message *msg) {
     int err = 0;
 
-    CHECK_ERR(transport->tcp->open(transport->tcp, transport->server, transport->server_tcp_port));
+//     CHECK_ERR(transport->tcp->open(transport->tcp, transport->server, transport->server_tcp_port));
 
-    drop_messages_until_error(transport->tcp);
+//     drop_messages_until_error(transport->tcp);
 
-    CHECK_ERR_GOTO(send_cmd(transport->tcp, CMD("EHLO ", transport->hostname, "\r\n"), 250), err, close_tcp);
+//     CHECK_ERR_GOTO(send_cmd(transport->tcp, CMD("EHLO ", transport->hostname, "\r\n"), 250), err, close_tcp);
 
-    drop_messages_until_error(transport->tcp);
+//     drop_messages_until_error(transport->tcp);
 
-    CHECK_ERR_GOTO(send_cmd(transport->tcp, CMD("STARTTLS\r\n"), 220), err, close_tcp);
+//     CHECK_ERR_GOTO(send_cmd(transport->tcp, CMD("STARTTLS\r\n"), 220), err, close_tcp);
 
-close_tcp:
-    CHECK_ERR(transport->tcp->close(transport->tcp));
+// close_tcp:
+//     CHECK_ERR(transport->tcp->close(transport->tcp));
 
-    if (err < 0) {
-        return err;
-    }
+//     if (err < 0) {
+//         return err;
+//     }
 
-    transport->sleep(1000);
+    // transport->sleep(1000);
 
     CHECK_ERR(transport->tls->open(transport->tls, transport->server, transport->server_tls_port));
 
