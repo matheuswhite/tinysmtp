@@ -8,6 +8,7 @@
 
 #define CONFIG_SERVER_LENGTH 32
 #define CONFIG_HOSTNAME_LENGTH 32
+#define CONFIG_TIMEZONE -3
 
 struct socket {
     int (*open)(struct socket *, char *, uint16_t);

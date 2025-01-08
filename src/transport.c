@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tinysmtp/transport.h>
 
 #define CMD(...)                                                                                                                   \
@@ -81,8 +82,25 @@ static int send_cmd(struct socket *sock, const char *cmd[], int expected_rsp) {
     return 0;
 }
 
+static void fmt_timestamp(const time_t *timestamp, char *buffer, size_t buffer_size) {
+    const char *weekdays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    const char *months[] = {"January", "February", "March",     "April",   "May",      "June",
+                            "July",    "August",   "September", "October", "November", "December"};
+    struct tm *datetime = localtime(timestamp);
+
+    snprintf(buffer, buffer_size, "%s, %02d %s %04d %02d:%02d:%02d", weekdays[datetime->tm_wday], datetime->tm_mday,
+             months[datetime->tm_mon], datetime->tm_year + 1900, datetime->tm_hour + CONFIG_TIMEZONE, datetime->tm_min,
+             datetime->tm_sec);
+}
+
 int ts_transport_send(struct transport *transport, struct message *msg) {
     int err = 0;
+    char datetime[32] = {};
+    time_t timestamp = 0;
+
+    time(&timestamp);
+    fmt_timestamp(&timestamp, datetime, sizeof(datetime));
+    printf("Datetime: %s\n", datetime);
 
     CHECK_ERR(transport->tls->open(transport->tls, transport->server, transport->server_tls_port));
 
@@ -101,8 +119,8 @@ int ts_transport_send(struct transport *transport, struct message *msg) {
 
     CHECK_ERR_GOTO(send_cmd(transport->tls, CMD("DATA\r\n"), 354), err, close_tls);
     CHECK_ERR_GOTO(send_cmd(transport->tls,
-                            CMD("Date: ", "Wed, 30 July 2019 06:04:34", "\r\n", "From: ", msg->from.address, "\r\n",
-                                "Subject: ", msg->subject, "\r\n", "To: ", msg->to.address, "\r\n", msg->body, "\r\n", ".\r\n"),
+                            CMD("Date: ", datetime, "\r\n", "From: ", msg->from.address, "\r\n", "Subject: ", msg->subject, "\r\n",
+                                "To: ", msg->to.address, "\r\n", msg->body, "\r\n", ".\r\n"),
                             250),
                    err, close_tls);
 
