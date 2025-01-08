@@ -1,12 +1,9 @@
-#include "message.h"
-#include "transport.h"
-#include "user_credentials.h"
-#include "zephyr/kernel.h"
-#include "zephyr/sockets.h"
-
 #include <stdint.h>
-
-void zephyr_sleep(uint32_t duration_ms) { k_msleep(duration_ms); }
+#include <tinysmtp/message.h>
+#include <tinysmtp/transport.h>
+#include <tinysmtp/user_credentials.h>
+#include <tinysmtp/zephyr/sockets.h>
+#include <zephyr/kernel.h>
 
 int main(int argc, char *argv[]) {
     int err;
@@ -23,7 +20,6 @@ int main(int argc, char *argv[]) {
         .server_tls_port = 465,
         .tcp = ts_zephyr_tcp_socket(),
         .tls = ts_zephyr_tls_socket(),
-        .sleep = zephyr_sleep,
     };
     struct message msg = {
         .from = {""},
@@ -36,5 +32,5 @@ int main(int argc, char *argv[]) {
 
     printk("ts_transport_send result: %d\n", err);
 
-    return 0;
+    exit(0);
 }

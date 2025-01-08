@@ -3,9 +3,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "credentials.h"
-#include "message.h"
+#include <tinysmtp/credentials.h>
+#include <tinysmtp/message.h>
 
 #define CONFIG_SERVER_LENGTH 32
 #define CONFIG_HOSTNAME_LENGTH 32
@@ -26,7 +25,6 @@ struct transport {
     struct credentials credentials;
     struct socket *tcp;
     struct socket *tls;
-    void (*sleep)(uint32_t);
 };
 
 int ts_transport_send(struct transport *transport, struct message *msg);

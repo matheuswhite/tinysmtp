@@ -1,10 +1,10 @@
-#include "sockets.h"
-#include "zephyr/net/dns_resolve.h"
-#include "zephyr/net/net_ip.h"
 #include <errno.h>
 #include <string.h>
 #include <sys/errno.h>
+#include <tinysmtp/zephyr/sockets.h>
 #include <zephyr/kernel.h>
+#include <zephyr/net/dns_resolve.h>
+#include <zephyr/net/net_ip.h>
 #include <zephyr/net/socket.h>
 #include <zephyr/net/tls_credentials.h>
 
@@ -63,7 +63,7 @@ static int resolve_server(char *server, uint8_t *ip) {
         return -EFAULT;
     }
 
-    memcpy(ip, dns.addr.data+2, 4);
+    memcpy(ip, dns.addr.data + 2, 4);
 
     return 0;
 }
@@ -178,20 +178,17 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
     struct tcp_socket_data *data;
     struct in_addr server_ip;
     struct timeval timeout;
-    sec_tag_t sec_tag_list[] = {
-		CA_CERTIFICATE_TAG
-	};
+    sec_tag_t sec_tag_list[] = {CA_CERTIFICATE_TAG};
 
     if (sock->user_data != NULL) {
         return -EAGAIN;
     }
 
-    err = tls_credential_add(CA_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
-				 ca_certificate, sizeof(ca_certificate));
-	if (err < 0) {
-		printk("Failed to register public certificate: %d\n", err);
-		return err;
-	}
+    err = tls_credential_add(CA_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE, ca_certificate, sizeof(ca_certificate));
+    if (err < 0) {
+        printk("Failed to register public certificate: %d\n", err);
+        return err;
+    }
 
     err = resolve_server(server, (uint8_t *) &server_ip.s_addr);
     if (err < 0) {
@@ -211,20 +208,17 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
         return -EFAULT;
     }
 
-    err = zsock_setsockopt(data->fd, SOL_TLS, TLS_SEC_TAG_LIST,
-			 sec_tag_list, sizeof(sec_tag_list));
-	if (err < 0) {
-		printk("Failed to set TLS_SEC_TAG_LIST option: %d\n", -errno);
-		return -errno;
-	}
+    err = zsock_setsockopt(data->fd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list, sizeof(sec_tag_list));
+    if (err < 0) {
+        printk("Failed to set TLS_SEC_TAG_LIST option: %d\n", -errno);
+        return -errno;
+    }
 
-    printf("server: %s\n", server);
-	err = zsock_setsockopt(data->fd, SOL_TLS, TLS_HOSTNAME,
-			 server, strlen(server));
-	if (err < 0) {
-		printk("Failed to set TLS_HOSTNAME option: %d\n", -errno);
-		return -errno;
-	}
+    err = zsock_setsockopt(data->fd, SOL_TLS, TLS_HOSTNAME, server, strlen(server));
+    if (err < 0) {
+        printk("Failed to set TLS_HOSTNAME option: %d\n", -errno);
+        return -errno;
+    }
 
     data->server_addr.sin_family = AF_INET;
     data->server_addr.sin_port = htons(port);

@@ -1,7 +1,7 @@
 #ifndef TS_MESSAGE_H
 #define TS_MESSAGE_H
 
-#include "address.h"
+#include <tinysmtp/address.h>
 
 #define CONFIG_SUBJECT_LENGTH 32
 #define CONFIG_BODY_LENGTH 64

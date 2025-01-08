@@ -1,5 +1,3 @@
-#include "sockets.h"
-
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
@@ -8,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <tinysmtp/linux/sockets.h>
 #include <unistd.h>
 
 struct tcp_socket_data {
@@ -146,7 +145,7 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
         return err;
     }
 
-    data = calloc(1, sizeof(struct tcp_socket_data));
+    data = calloc(1, sizeof(struct tls_socket_data));
     if (data == NULL) {
         return -ENOMEM;
     }
@@ -207,7 +206,9 @@ static int tls_close(struct socket *sock) {
     }
 
     SSL_free(data->ssl);
+    data->ssl = NULL;
     SSL_CTX_free(data->ctx);
+    data->ctx = NULL;
     free(sock->user_data);
     sock->user_data = NULL;
 

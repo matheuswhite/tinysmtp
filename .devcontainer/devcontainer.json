@@ -6,5 +6,15 @@
         "--privileged"
     ],
     "workspaceMount": "source=${localWorkspaceFolder},target=/workdir/tinysmtp,type=bind",
-    "workspaceFolder": "/workdir/tinysmtp"
+    "workspaceFolder": "/workdir/tinysmtp",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vivaxy.vscode-conventional-commits",
+                "twxs.cmake",
+                "xaver.clang-format",
+                "ms-vscode.cpptools"
+            ]
+        }
+    }
 }
