@@ -16,9 +16,7 @@ int main(int argc, char *argv[]) {
             },
         .hostname = "LinuxMachine",
         .server = "smtp.gmail.com",
-        .server_tcp_port = 587,
         .server_tls_port = 465,
-        .tcp = ts_linux_tcp_socket(),
         .tls = ts_linux_tls_socket(),
     };
     struct message msg = {

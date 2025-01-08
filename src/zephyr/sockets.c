@@ -25,7 +25,7 @@ static struct dns_fields {
     .status = DNS_EAI_NODATA,
 };
 
-struct tcp_socket_data {
+struct tls_socket_data {
     int fd;
     struct sockaddr_in server_addr;
 };
@@ -68,114 +68,9 @@ static int resolve_server(char *server, uint8_t *ip) {
     return 0;
 }
 
-static int tcp_open(struct socket *sock, char *server, uint16_t port) {
-    int err;
-    struct tcp_socket_data *data;
-    struct in_addr server_ip;
-    struct timeval timeout;
-
-    if (sock->user_data != NULL) {
-        return -EAGAIN;
-    }
-
-    err = resolve_server(server, (uint8_t *) &server_ip.s_addr);
-    if (err < 0) {
-        printk("Error to resolve DNS: %d\n", err);
-        return err;
-    }
-
-    data = calloc(1, sizeof(struct tcp_socket_data));
-    if (data == NULL) {
-        return -ENOMEM;
-    }
-
-    sock->user_data = data;
-
-    data->fd = zsock_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (data->fd < 0) {
-        printk("Cannot open socket: %d\n", data->fd);
-        return -EFAULT;
-    }
-
-    data->server_addr.sin_family = AF_INET;
-    data->server_addr.sin_port = htons(port);
-    data->server_addr.sin_addr.s_addr = server_ip.s_addr;
-
-    err = zsock_connect(data->fd, (struct sockaddr *) &data->server_addr, sizeof(struct sockaddr_in));
-    if (err < 0) {
-        printk("Cannot connect to socket: %d\n", -errno);
-        return -errno;
-    }
-
-    timeout.tv_sec = 2;
-    timeout.tv_usec = 0;
-    zsock_setsockopt(data->fd, SOL_SOCKET, SO_RCVTIMEO, (const char *) &timeout, sizeof(timeout));
-
-    return 0;
-}
-
-static int socket_close(struct socket *sock) {
-    int err;
-    struct tcp_socket_data *data;
-
-    if (sock->user_data == NULL) {
-        return -EAGAIN;
-    }
-
-    data = sock->user_data;
-
-    err = zsock_close(data->fd);
-    if (err < 0) {
-        return err;
-    }
-
-    free(sock->user_data);
-    sock->user_data = NULL;
-
-    return 0;
-}
-
-static int socket_write(void *user_data, uint8_t *buffer, size_t buffer_len) {
-    int err;
-    struct tcp_socket_data *data = user_data;
-
-    err = zsock_send(data->fd, buffer, buffer_len, 0);
-    if (err < 0) {
-        return -errno;
-    }
-
-    return 0;
-}
-
-static int socket_read(void *user_data, uint8_t *buffer, size_t buffer_len) {
-    int err;
-    struct tcp_socket_data *data = user_data;
-
-    err = zsock_recv(data->fd, buffer, buffer_len, 0);
-    if (err < 0) {
-        return -errno;
-    }
-
-    return 0;
-}
-
-struct socket *ts_zephyr_tcp_socket(void) {
-    struct socket *socket = calloc(1, sizeof(struct socket));
-    if (socket == NULL) {
-        return NULL;
-    }
-
-    socket->open = tcp_open;
-    socket->close = socket_close;
-    socket->write = socket_write;
-    socket->read = socket_read;
-
-    return socket;
-}
-
 static int tls_open(struct socket *sock, char *server, uint16_t port) {
     int err;
-    struct tcp_socket_data *data;
+    struct tls_socket_data *data;
     struct in_addr server_ip;
     struct timeval timeout;
     sec_tag_t sec_tag_list[] = {CA_CERTIFICATE_TAG};
@@ -196,7 +91,7 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
         return err;
     }
 
-    data = calloc(1, sizeof(struct tcp_socket_data));
+    data = calloc(1, sizeof(struct tls_socket_data));
     if (data == NULL) {
         return -ENOMEM;
     }
@@ -236,6 +131,51 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
     return 0;
 }
 
+static int tls_close(struct socket *sock) {
+    int err;
+    struct tls_socket_data *data;
+
+    if (sock->user_data == NULL) {
+        return -EAGAIN;
+    }
+
+    data = sock->user_data;
+
+    err = zsock_close(data->fd);
+    if (err < 0) {
+        return err;
+    }
+
+    free(sock->user_data);
+    sock->user_data = NULL;
+
+    return 0;
+}
+
+static int tls_write(void *user_data, uint8_t *buffer, size_t buffer_len) {
+    int err;
+    struct tls_socket_data *data = user_data;
+
+    err = zsock_send(data->fd, buffer, buffer_len, 0);
+    if (err < 0) {
+        return -errno;
+    }
+
+    return 0;
+}
+
+static int tls_read(void *user_data, uint8_t *buffer, size_t buffer_len) {
+    int err;
+    struct tls_socket_data *data = user_data;
+
+    err = zsock_recv(data->fd, buffer, buffer_len, 0);
+    if (err < 0) {
+        return -errno;
+    }
+
+    return 0;
+}
+
 struct socket *ts_zephyr_tls_socket(void) {
     struct socket *socket = calloc(1, sizeof(struct socket));
     if (socket == NULL) {
@@ -243,9 +183,9 @@ struct socket *ts_zephyr_tls_socket(void) {
     }
 
     socket->open = tls_open;
-    socket->close = socket_close;
-    socket->write = socket_write;
-    socket->read = socket_read;
+    socket->close = tls_close;
+    socket->write = tls_write;
+    socket->read = tls_read;
 
     return socket;
 }

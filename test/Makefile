@@ -3,18 +3,22 @@
 all: linux zephyr
 
 linux:
+	@printf "\e[33m***** Building linux variant\e[0m\n"
 	mkdir -p build/linux && \
 		cd build/linux && \
 		cmake ../../linux -DCMAKE_BUILD_TYPE=Debug && \
 		make
+	@printf "\e[33m***** Running linux variant\e[0m\n"
 	build/linux/test_tinysmtp
-	@echo "[ OK] Linux"
+	@printf "[ \e[1;32mOK\e[0m] Linux\n"
 
 zephyr:
+	@printf "\e[33m***** Building zephyr variant\e[0m\n"
 	mkdir -p build/zephyr
 	west build -p -b native_sim/native/64 -d build/zephyr zephyr
+	@printf "\e[33m***** Running zephyr variant\e[0m\n"
 	west build -d build/zephyr -t run
-	@echo "[ OK] Zephyr"
+	@printf "[ \e[1;32mOK\e[0m] Zephyr\n"
 
 clean: clean_linux clean_zephyr
 

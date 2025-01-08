@@ -20,10 +20,8 @@ struct socket {
 struct transport {
     char hostname[CONFIG_HOSTNAME_LENGTH];
     char server[CONFIG_SERVER_LENGTH];
-    uint16_t server_tcp_port;
     uint16_t server_tls_port;
     struct credentials credentials;
-    struct socket *tcp;
     struct socket *tls;
 };
 

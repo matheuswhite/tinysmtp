@@ -17,9 +17,7 @@ int main(int argc, char *argv[]) {
             },
         .hostname = "ZephyrMachine",
         .server = "smtp.gmail.com",
-        .server_tcp_port = 587,
         .server_tls_port = 465,
-        .tcp = ts_zephyr_tcp_socket(),
         .tls = ts_zephyr_tls_socket(),
     };
     struct message msg = {
