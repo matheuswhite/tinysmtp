@@ -1,9 +1,10 @@
 #include <stdint.h>
 #include <tinysmtp/message.h>
 #include <tinysmtp/transport.h>
-#include <tinysmtp/user_credentials.h>
 #include <tinysmtp/zephyr/sockets.h>
 #include <zephyr/kernel.h>
+
+#include <tinysmtp/user_credentials.h>
 
 int main(int argc, char *argv[]) {
     int err;
@@ -11,8 +12,8 @@ int main(int argc, char *argv[]) {
     struct transport transport = {
         .credentials =
             {
-                .user_b64 = USER_B64,
-                .password_b64 = PASSWORD_B64,
+                .user_b64 = TS_USER_B64,
+                .password_b64 = TS_PASSWORD_B64,
             },
         .hostname = "ZephyrMachine",
         .server = "smtp.gmail.com",
@@ -22,8 +23,8 @@ int main(int argc, char *argv[]) {
         .tls = ts_zephyr_tls_socket(),
     };
     struct message msg = {
-        .from = {""},
-        .to = {""},
+        .from = {TS_FROM_ADDRESS},
+        .to = {TS_TO_ADDRESS},
         .subject = "Test from zephyr",
         .body = "Test from zephyr body",
     };

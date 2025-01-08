@@ -11,8 +11,8 @@ int main(int argc, char *argv[]) {
     struct transport transport = {
         .credentials =
             {
-                .user_b64 = USER_B64,
-                .password_b64 = PASSWORD_B64,
+                .user_b64 = TS_USER_B64,
+                .password_b64 = TS_PASSWORD_B64,
             },
         .hostname = "LinuxMachine",
         .server = "smtp.gmail.com",
@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
         .tls = ts_linux_tls_socket(),
     };
     struct message msg = {
-        .from = "",
-        .to = "",
+        .from = {TS_FROM_ADDRESS},
+        .to = {TS_TO_ADDRESS},
         .subject = "Test from linux",
         .body = "Test from linux body",
     };
