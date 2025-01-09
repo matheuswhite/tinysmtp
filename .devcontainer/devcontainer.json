@@ -13,7 +13,8 @@
                 "vivaxy.vscode-conventional-commits",
                 "twxs.cmake",
                 "xaver.clang-format",
-                "ms-vscode.cpptools"
+                "ms-vscode.cpptools",
+                "cschlosser.doxdocgen"
             ]
         }
     }
