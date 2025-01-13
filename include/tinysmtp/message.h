@@ -17,7 +17,7 @@
  * @brief Maximum length of email subject.
  *
  */
-#define CONFIG_SUBJECT_LENGTH 32
+#define CONFIG_SUBJECT_LENGTH 64
 
 /**
  * @brief Maximum length of email body.
