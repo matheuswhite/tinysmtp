@@ -10,6 +10,8 @@
 
 #define CA_CERTIFICATE_TAG 1
 
+LOG_MODULE_REGISTER(tinysmtp_sockets, LOG_LEVEL_DBG);
+
 static const unsigned char ca_certificate[] = {
 #include "globalsign_r1.der.inc"
 };
@@ -37,9 +39,9 @@ static void dns_resolve_callback(enum dns_resolve_status status, struct dns_addr
         return;
     }
 
-    printk("dns resolve callback\n");
-    printk("\tstatus: %d\n", status);
-    printk("\tinfo: %d.%d.%d.%d\n", info->ai_addr.data[2], info->ai_addr.data[3], info->ai_addr.data[4], info->ai_addr.data[5]);
+    LOG_DBG("dns resolve callback");
+    LOG_DBG("\tstatus: %d", status);
+    LOG_DBG("\tinfo: %d.%d.%d.%d", info->ai_addr.data[2], info->ai_addr.data[3], info->ai_addr.data[4], info->ai_addr.data[5]);
 
     dns.status = status;
     memcpy(&dns.addr, &info->ai_addr, sizeof(struct sockaddr));
@@ -53,7 +55,7 @@ static int resolve_server(char *server, uint8_t *ip) {
 
     err = dns_resolve_name(dns.ctx, server, DNS_QUERY_TYPE_A, NULL, dns_resolve_callback, NULL, 2000);
     if (err < 0) {
-        printk("Resolve name error: %d\n", err);
+        LOG_ERR("Resolve name error: %d", err);
         return err;
     }
 
@@ -78,13 +80,13 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
 
     err = tls_credential_add(CA_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE, ca_certificate, sizeof(ca_certificate));
     if (err < 0) {
-        printk("Failed to register public certificate: %d\n", err);
+        LOG_ERR("Failed to register public certificate: %d", err);
         return err;
     }
 
     err = resolve_server(server, (uint8_t *) &server_ip.s_addr);
     if (err < 0) {
-        printk("Error to resolve DNS: %d\n", err);
+        LOG_ERR("Error to resolve DNS: %d", err);
         return err;
     }
 
@@ -102,14 +104,14 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
 
     err = zsock_setsockopt(socket_data.fd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list, sizeof(sec_tag_list));
     if (err < 0) {
-        printk("Failed to set TLS_SEC_TAG_LIST option: %d\n", -errno);
+        LOG_ERR("Failed to set TLS_SEC_TAG_LIST option: %d", -errno);
         k_mutex_unlock(&socket_lock);
         return -errno;
     }
 
     err = zsock_setsockopt(socket_data.fd, SOL_TLS, TLS_HOSTNAME, server, strlen(server));
     if (err < 0) {
-        printk("Failed to set TLS_HOSTNAME option: %d\n", -errno);
+        LOG_ERR("Failed to set TLS_HOSTNAME option: %d", -errno);
         k_mutex_unlock(&socket_lock);
         return -errno;
     }
