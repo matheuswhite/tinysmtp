@@ -8,11 +8,7 @@
 #include <zephyr/net/socket.h>
 #include <zephyr/net/tls_credentials.h>
 
-#define CA_CERTIFICATE_TAG 1
-
-static const unsigned char ca_certificate[] = {
-#include "globalsign_r1.der.inc"
-};
+LOG_MODULE_REGISTER(tinysmtp_sockets, LOG_LEVEL_DBG);
 
 static struct dns_fields {
     struct dns_resolve_context *ctx;
@@ -27,9 +23,10 @@ static struct dns_fields {
 
 K_MUTEX_DEFINE(socket_lock);
 
-struct tls_socket_data {
+static struct tls_socket_data {
     int fd;
     struct sockaddr_in server_addr;
+    sec_tag_t sec_tag_list[1];
 } socket_data;
 
 static void dns_resolve_callback(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data) {
@@ -74,13 +71,6 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
     int err;
     struct in_addr server_ip;
     struct timeval timeout;
-    sec_tag_t sec_tag_list[] = {CA_CERTIFICATE_TAG};
-
-    err = tls_credential_add(CA_CERTIFICATE_TAG, TLS_CREDENTIAL_CA_CERTIFICATE, ca_certificate, sizeof(ca_certificate));
-    if (err < 0) {
-        printk("Failed to register public certificate: %d\n", err);
-        return err;
-    }
 
     err = resolve_server(server, (uint8_t *) &server_ip.s_addr);
     if (err < 0) {
@@ -88,7 +78,6 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
         return err;
     }
 
-    // lock mutex
     err = k_mutex_lock(&socket_lock, K_MSEC(CONFIG_SOCKET_OPEN_TIMEOUT_MS));
     if (err < 0) {
         return err;
@@ -100,7 +89,7 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
         return -EFAULT;
     }
 
-    err = zsock_setsockopt(socket_data.fd, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_list, sizeof(sec_tag_list));
+    err = zsock_setsockopt(socket_data.fd, SOL_TLS, TLS_SEC_TAG_LIST, socket_data.sec_tag_list, sizeof(socket_data.sec_tag_list));
     if (err < 0) {
         printk("Failed to set TLS_SEC_TAG_LIST option: %d\n", -errno);
         k_mutex_unlock(&socket_lock);
@@ -171,7 +160,7 @@ static int tls_read(void *user_data, uint8_t *buffer, size_t buffer_len) {
     return 0;
 }
 
-struct socket tls_socket = {
+static struct socket tls_socket = {
     .open = tls_open,
     .close = tls_close,
     .write = tls_write,
@@ -180,3 +169,5 @@ struct socket tls_socket = {
 };
 
 struct socket *ts_zephyr_tls_socket(void) { return &tls_socket; }
+
+void ts_zephyr_set_sec_tag(sec_tag_t sec_tag) { socket_data.sec_tag_list[0] = sec_tag; }
