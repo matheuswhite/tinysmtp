@@ -8,10 +8,22 @@
 #define CMD(...)                                                                                                                   \
     (const char *[]) { __VA_ARGS__, NULL }
 
+#ifdef CONFIG_TS_DEBUG_EN
+#define PRINTF(fmt, ...) \
+    do {                                                                                                                           \
+        printk(fmt, __VA_ARGS__);                                                                                                 \
+    } while (0)
+#else
+#define PRINTF(fmt, ...) \
+    do {                                                                                                                           \
+    } while (0)
+#endif
+
 #define CHECK_ERR(fn)                                                                                                              \
     do {                                                                                                                           \
         int __err = fn;                                                                                                            \
         if (__err < 0) {                                                                                                           \
+            PRINTF("Fail: %s:%d\n", __func__, __LINE__);                                                                           \
             return __err;                                                                                                          \
         }                                                                                                                          \
     } while (0)
@@ -20,6 +32,7 @@
     do {                                                                                                                           \
         err = fn;                                                                                                                  \
         if (err < 0) {                                                                                                             \
+            PRINTF("Fail: %s:%d\n", __func__, __LINE__);                                                                           \
             goto label;                                                                                                            \
         }                                                                                                                          \
     } while (0)
@@ -52,7 +65,7 @@ static void drop_messages_until_error(struct socket *sock) {
 
     while (err == 0) {
         err = recv_line(sock, line, sizeof(line));
-        printf("Dropped >> [%s]\r\n", line);
+        PRINTF("Dropped >> [%s]\r\n", line);
     }
 }
 
@@ -95,14 +108,14 @@ static void fmt_timestamp(const time_t *timestamp, char *buffer, size_t buffer_s
 
 int ts_transport_send(struct transport *transport, struct message *msg) {
     int err = 0;
-    char datetime[32] = {};
+    char datetime[48] = {};
     time_t timestamp = 0;
 
     time(&timestamp);
     fmt_timestamp(&timestamp, datetime, sizeof(datetime));
-    printf("Datetime: %s\n", datetime);
+    PRINTF("Datetime: %s\n", datetime);
 
-    CHECK_ERR(transport->tls->open(transport->tls, transport->server, transport->server_tls_port));
+    CHECK_ERR_GOTO(transport->tls->open(transport->tls, transport->server, transport->server_tls_port), err, close_tls);
 
     drop_messages_until_error(transport->tls);
 

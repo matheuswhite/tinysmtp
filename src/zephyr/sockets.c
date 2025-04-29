@@ -35,8 +35,8 @@ static void dns_resolve_callback(enum dns_resolve_status status, struct dns_addr
     }
 
     printk("dns resolve callback\n");
-    printk("\tstatus: %d\n", status);
-    printk("\tinfo: %d.%d.%d.%d\n", info->ai_addr.data[2], info->ai_addr.data[3], info->ai_addr.data[4], info->ai_addr.data[5]);
+    printk("    status: %d\n", status);
+    printk("    info: %d.%d.%d.%d\n", info->ai_addr.data[2], info->ai_addr.data[3], info->ai_addr.data[4], info->ai_addr.data[5]);
 
     dns.status = status;
     memcpy(&dns.addr, &info->ai_addr, sizeof(struct sockaddr));
@@ -64,6 +64,10 @@ static int resolve_server(char *server, uint8_t *ip) {
 
     memcpy(ip, dns.addr.data + 2, 4);
 
+    dns.has_finished = false;
+    dns.status = DNS_EAI_NODATA;
+    dns.ctx = NULL;
+
     return 0;
 }
 
@@ -80,11 +84,13 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
 
     err = k_mutex_lock(&socket_lock, K_MSEC(CONFIG_SOCKET_OPEN_TIMEOUT_MS));
     if (err < 0) {
+        printk("Error lock mutex: %d\n", err);
         return err;
     }
 
     socket_data.fd = zsock_socket(AF_INET, SOCK_STREAM, IPPROTO_TLS_1_2);
     if (socket_data.fd < 0) {
+        printk("Error to zsock_socket: %d,%d\n", socket_data.fd, -errno);
         k_mutex_unlock(&socket_lock);
         return -EFAULT;
     }
@@ -109,6 +115,7 @@ static int tls_open(struct socket *sock, char *server, uint16_t port) {
 
     err = zsock_connect(socket_data.fd, (struct sockaddr *) &socket_data.server_addr, sizeof(struct sockaddr_in));
     if (err < 0) {
+        printk("Error to zsock_connect: %d,%d\n", err, -errno);
         k_mutex_unlock(&socket_lock);
         return -errno;
     }
@@ -126,6 +133,7 @@ static int tls_close(struct socket *sock) {
 
     err = zsock_close(data->fd);
     if (err < 0) {
+        printk("Error to close socket: %d\n", -errno);
         return err;
     }
 
